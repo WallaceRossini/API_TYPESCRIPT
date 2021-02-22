@@ -1,0 +1,22 @@
+{
+  "type": "mysql",
+  "host": "172.0.1.22",
+  "port": 3306,
+  "username": "developer",
+  "password": "pass",
+  "database": "ts_api",
+  "synchronize": true,
+  "logging": false,
+  "entities": [
+    "src/app/models/*.ts"
+  ],
+  "migrations": [
+    "src/migrations/*.ts"
+  ],
+  "cli": {
+    "migrationsDir": [
+      "src/migrations"
+    ],
+    "entitiesDir": "src/app/models"
+  }
+}
