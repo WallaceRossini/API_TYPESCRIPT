@@ -1,7 +1,7 @@
 import { plainToClass } from 'class-transformer';
 import { Body, JsonController, Post } from 'routing-controllers';
 import { getRepository, Repository } from 'typeorm';
-import { UsersDto } from '../../../dto';
+import { AuthenticationDto, RegisterDto } from '../../../dto';
 import { RoleType } from '../../../enum';
 import { Users } from '../../models'
 import bcrypt from 'bcryptjs';
@@ -10,20 +10,20 @@ import bcrypt from 'bcryptjs';
 export class AuthController {
 
   @Post('/register')
-  public async newUser(
-    @Body() userDto: UsersDto
+  public async register(
+    @Body() userDto: RegisterDto
   ) {
     try {
 
       const userRepository: Repository<Users> = getRepository(Users)
 
-      const verificyEmail = await userRepository.findOne({
+      const checkEmail = await userRepository.findOne({
         where: {
           email: userDto.email
         }
       })
 
-      if (verificyEmail != undefined)
+      if (checkEmail != undefined)
         return { success: false, message: 'Email já em uso' }
 
       const hash = await bcrypt.hash(userDto.password, 10)
@@ -37,7 +37,7 @@ export class AuthController {
 
       const response = await userRepository.save(user);
 
-      const userFormat = plainToClass(UsersDto, {
+      const userFormat = plainToClass(RegisterDto, {
         id: response.id,
         name: response.name,
         email: response.email,
@@ -46,6 +46,42 @@ export class AuthController {
       return {
         success: true, data: userFormat
       }
+
+    } catch (e) {
+      console.log(`🛑 ERRO: ${e}`);
+      return { success: false, details: e.message }
+    }
+  }
+
+  @Post('/authentication')
+  public async authentication(
+    @Body() authDto: AuthenticationDto
+  ) {
+    try {
+
+      const userRepository: Repository<Users> = getRepository(Users)
+
+      const response = await userRepository.findOne({
+        where: {
+          email: authDto.email
+        }
+      })
+
+      if (!response)
+        return { success: false, message: "Email e/ou senha incorretos!" }
+
+      const checkPassword = await bcrypt.compare(authDto.password, response.password)
+
+      if (checkPassword !== true)
+        return { success: false, message: "Email e/ou senha incorretos!" }
+
+      const data = plainToClass(AuthenticationDto, {
+        "id": response.id,
+        "name": response.name,
+        "email": response.email
+      })
+
+      return { success: true, data }
 
     } catch (e) {
       console.log(`🛑 ERRO: ${e}`);
