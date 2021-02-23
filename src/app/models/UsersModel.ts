@@ -14,11 +14,17 @@ export class Users {
     email: string;
 
     @Column()
-    password: string; 
+    password: string;
 
     @Column()
     role: RoleType;
 
-    @CreateDateColumn({name:'created_at'})
+    @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
+
+    @Column({ name: "password_reset_token", default: null, nullable: true })
+    passwordResetToken: string
+
+    @Column({ name: "password_reset_expires", default: null, nullable: true })
+    passwordResetExpires: Date
 }

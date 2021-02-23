@@ -30,4 +30,13 @@ export class AuthenticationDto {
   @IsString()
   @IsNotEmpty()
   password: string
+  
+}
+
+export class ForgotPasswordDto {
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string
+
 }

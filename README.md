@@ -4,5 +4,5 @@
  - npx tsc --init
  - yarn add express
  - yarn add @types/express -D
- - yarn run typeorm migration:generate -n {{NomeMigration}} -d ./src/migrations
- - yarn run typeorm migration:run
+ - yarn typeorm migration:generate -n {{NomeMigration}}
+ - yarn typeorm migration:run

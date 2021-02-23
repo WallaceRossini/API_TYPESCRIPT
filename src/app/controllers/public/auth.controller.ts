@@ -1,10 +1,11 @@
 import { plainToClass } from 'class-transformer';
 import { Body, JsonController, Post } from 'routing-controllers';
 import { getRepository, Repository } from 'typeorm';
-import { AuthenticationDto, RegisterDto } from '../../../dto';
+import { AuthenticationDto, ForgotPasswordDto, RegisterDto } from '../../../dto';
 import { RoleType } from '../../../enum';
 import { Users } from '../../models'
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 @JsonController('/auth')
 export class AuthController {
@@ -87,5 +88,43 @@ export class AuthController {
       console.log(`🛑 ERRO: ${e}`);
       return { success: false, details: e.message }
     }
+  }
+
+  @Post('/forgot_password')
+  public async forgotPasssword(
+    @Body() forgotPassDto: ForgotPasswordDto
+  ) {
+    try {
+
+      const userRepository: Repository<Users> = getRepository(Users)
+
+      const response = await userRepository.findOne({
+        where: {
+          email: forgotPassDto.email
+        }
+      })
+
+      if (!response)
+        return { success: false, message: "Email inválido!" }
+
+      const resetToken = crypto.randomBytes(20).toString('hex');
+
+      const now = new Date();
+
+      const resetExpires = new Date(now.setHours(now.getHours() + 1));
+
+      await userRepository.save({
+        id: response.id,
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetExpires
+      })
+
+      return { success: true, message: "Verifique seu email, para redefinir sua senha" }
+
+    } catch (e) {
+      console.log(`🛑 ERRO: ${e}`);
+      return { success: false, details: e.message }
+    }
+
   }
 }
