@@ -22,9 +22,9 @@ export class Users {
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
-    @Column({ name: "password_reset_token", default: null, nullable: true })
-    passwordResetToken: string
+    @Column({ name: "password_reset_token", type: "varchar", default: null, nullable: true })
+    passwordResetToken: string | null
 
-    @Column({ name: "password_reset_expires", default: null, nullable: true })
+    @Column({ name: "password_reset_expires",default: null, nullable: true })
     passwordResetExpires: Date
 }

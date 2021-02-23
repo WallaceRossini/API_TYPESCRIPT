@@ -40,3 +40,11 @@ export class ForgotPasswordDto {
   email: string
 
 }
+
+export class ResetPasswordDto {
+
+  @IsString()
+  @IsString()
+  password:string
+
+}

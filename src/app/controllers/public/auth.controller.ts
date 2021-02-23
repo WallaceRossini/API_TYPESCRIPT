@@ -1,7 +1,7 @@
 import { plainToClass } from 'class-transformer';
-import { Body, JsonController, Post } from 'routing-controllers';
+import { Body, JsonController, Param, Post } from 'routing-controllers';
 import { getRepository, Repository } from 'typeorm';
-import { AuthenticationDto, ForgotPasswordDto, RegisterDto } from '../../../dto';
+import { AuthenticationDto, ForgotPasswordDto, RegisterDto, ResetPasswordDto } from '../../../dto';
 import { RoleType } from '../../../enum';
 import { Users } from '../../models'
 import bcrypt from 'bcryptjs';
@@ -126,5 +126,45 @@ export class AuthController {
       return { success: false, details: e.message }
     }
 
+  }
+
+  @Post('/reset_password/:token')
+  public async resetPassword(
+    @Body() resetPassDto: ResetPasswordDto,
+    @Param('token') resetPassToken: string
+  ) {
+    try {
+
+      const userRepository: Repository<Users> = getRepository(Users)
+
+      const response = await userRepository.findOne({
+        where: {
+          passwordResetToken: resetPassToken
+        }
+      })
+
+      if (!response)
+        return { success: false, message: "Token expirado, solicite uma nova redefiniçao de senha" }
+
+      const newPassword = await bcrypt.hash(resetPassDto.password, 10)
+
+      const now = new Date()
+
+      if (now > response.passwordResetExpires)
+        return { success: false, message: "Token expirado, solicite uma nova redefiniçao de senha" }
+
+      await userRepository.save({
+        id: response.id,
+        passwordResetToken: null,
+        passwordResetExpires:"(NULL)",
+        password:newPassword
+      })
+
+      return { success: true, message: "Senha atualizada com sucesso" }
+
+    } catch (e) {
+      console.log(`🛑 ERRO: ${e}`);
+      return { success: false, details: e.message }
+    }
   }
 }
