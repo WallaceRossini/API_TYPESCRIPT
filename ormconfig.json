@@ -1,9 +1,9 @@
 {
   "type": "mysql",
-  "host": "172.0.1.22",
+  "host": "ts-api-devwr.c85egwidehfu.us-east-2.rds.amazonaws.com",
   "port": 3306,
   "username": "developer",
-  "password": "pass",
+  "password": "password",
   "database": "ts_api",
   "synchronize": true,
   "logging": false,

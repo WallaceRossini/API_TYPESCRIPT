@@ -1,11 +1,12 @@
 import { plainToClass } from 'class-transformer';
-import { Body, JsonController, Param, Post } from 'routing-controllers';
+import { Body, Get, JsonController, Param, Post } from 'routing-controllers';
 import { getRepository, Repository } from 'typeorm';
 import { AuthenticationDto, ForgotPasswordDto, RegisterDto, ResetPasswordDto } from '../../../dto';
 import { RoleType } from '../../../enum';
 import { Users } from '../../models'
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import Mail from '../../../services/Mail';
 
 @JsonController('/auth')
 export class AuthController {
@@ -29,23 +30,26 @@ export class AuthController {
 
       const hash = await bcrypt.hash(userDto.password, 10)
 
+      const token = crypto.randomBytes(20).toString('hex');
+
       const user = plainToClass(Users, {
         name: userDto.name,
         email: userDto.email,
         password: hash,
-        role: RoleType.DEVELOPER
+        validationMail: token,
+        role: RoleType.DEVELOPER,
       })
 
       const response = await userRepository.save(user);
 
-      const userFormat = plainToClass(RegisterDto, {
-        id: response.id,
-        name: response.name,
-        email: response.email,
-      })
+      const variebles = {
+        token, link: process.env.LINK, name: user.name
+      }
+
+      await Mail.execute(user.email, 'Validação de email', variebles, 'validation_mail')
 
       return {
-        success: true, data: userFormat
+        success: true, message: "Verifique seu email"
       }
 
     } catch (e) {
@@ -75,6 +79,11 @@ export class AuthController {
 
       if (checkPassword !== true)
         return { success: false, message: "Email e/ou senha incorretos!" }
+
+      // if (response.validationMail !== null)
+      //   return { success: false, message: "Valide seu email para se autenticar!" }
+
+      console.log(response)
 
       const data = plainToClass(AuthenticationDto, {
         "id": response.id,
@@ -156,11 +165,37 @@ export class AuthController {
       await userRepository.save({
         id: response.id,
         passwordResetToken: null,
-        passwordResetExpires:"(NULL)",
-        password:newPassword
+        passwordResetExpires: "(NULL)",
+        password: newPassword
       })
 
       return { success: true, message: "Senha atualizada com sucesso" }
+
+    } catch (e) {
+      console.log(`🛑 ERRO: ${e}`);
+      return { success: false, details: e.message }
+    }
+  }
+
+  @Get('/validation_mail/:token')
+  public async validation_mail(
+    @Param('token') validationMail: string
+  ) {
+    try {
+      const userRepository: Repository<Users> = getRepository(Users)
+
+      const response = await userRepository.findOne({
+        where: {
+          validationMail
+        }
+      })
+
+      if (!response)
+        return
+
+      await userRepository.save({ id: response.id, validationMail: null })
+
+      return { success: true, message: "Email validado com sucesso" }
 
     } catch (e) {
       console.log(`🛑 ERRO: ${e}`);

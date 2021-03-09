@@ -27,6 +27,6 @@ const app = createExpressServer({
 
 const server = new http.Server(app);
 
-server.listen(4000, () => {
-  console.log('[+] 🔥 Application is running at port 4000');
+server.listen(process.env.PORT, () => {
+  console.log(`[+] 🔥 Application is running at port ${process.env.PORT}`);
 })
